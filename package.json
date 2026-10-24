@@ -61,8 +61,6 @@
         "react": "19.2.7",
         "react-dom": "19.2.7",
         "react-native": "0.86.0",
-        "react-native-background-fetch": "^4.2.7",
-        "react-native-background-geolocation": "^4.18.6",
         "react-native-bootsplash": "^5.3.0",
         "react-native-calendar-strip": "^2.2.6",
         "react-native-collapsible": "^1.6.2",
@@ -151,6 +149,14 @@
         "react-native-i18n@^2.0.15": "patch:react-native-i18n@npm%3A2.0.15#./.yarn/patches/react-native-i18n-npm-2.0.15-7f3cf7cee6.patch",
         "react-native-launch-navigator@^1.0.9": "patch:react-native-launch-navigator@npm%3A1.0.9#./.yarn/patches/react-native-launch-navigator-npm-1.0.9-f069a6b5fd.patch",
         "react-native-notifications@^5.1.0": "patch:react-native-notifications@npm%3A5.1.0#./.yarn/patches/react-native-notifications-npm-5.1.0-3e3b2ea3f8.patch"
+    },
+    "codegenConfig": {
+        "name": "DriverLocationSpec",
+        "type": "modules",
+        "jsSrcsDir": "specs",
+        "android": {
+            "javaPackageName": "io.fleetbase.navigator.location"
+        }
     },
     "jest": {
         "preset": "react-native",

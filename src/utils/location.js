@@ -1,4 +1,4 @@
-import BackgroundGeolocation from 'react-native-background-geolocation';
+import { driverLocation } from '../services/driver-location';
 import { Platform } from 'react-native';
 import { EventRegister } from 'react-native-event-listeners';
 import { checkMultiple, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
@@ -216,14 +216,7 @@ export function serializGoogleAddress(googleAddress) {
 
 export async function getLiveLocation(adapter) {
     return new Promise((resolve) => {
-        BackgroundGeolocation.getCurrentPosition(
-            {
-                samples: 3,
-                desiredAccuracy: 1,
-                extras: {
-                    event: 'getCurrentPosition',
-                },
-            },
+        driverLocation.getCurrentPosition().then(
             async (position) => {
                 const { latitude, longitude } = position.coords;
 
@@ -247,8 +240,7 @@ export async function getLiveLocation(adapter) {
                     resolve(place);
                 }
             },
-            (error) => resolve(null),
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+            () => resolve(null)
         );
     });
 }
@@ -257,14 +249,7 @@ export async function getCurrentLocation(adapter) {
     const lastLocation = restoreFleetbasePlace(storage.getMap('_current_location'), adapter);
 
     return new Promise((resolve) => {
-        BackgroundGeolocation.getCurrentPosition(
-            {
-                samples: 3,
-                desiredAccuracy: 1,
-                extras: {
-                    event: 'getCurrentPosition',
-                },
-            },
+        driverLocation.getCurrentPosition().then(
             async (position) => {
                 const { latitude, longitude } = position.coords;
 
@@ -289,8 +274,7 @@ export async function getCurrentLocation(adapter) {
                     resolve(place);
                 }
             },
-            (error) => resolve(null),
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+            () => resolve(null)
         );
     });
 }

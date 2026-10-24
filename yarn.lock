@@ -2445,8 +2445,6 @@ __metadata:
     react: 19.2.7
     react-dom: 19.2.7
     react-native: 0.86.0
-    react-native-background-fetch: ^4.2.7
-    react-native-background-geolocation: ^4.18.6
     react-native-bootsplash: ^5.3.0
     react-native-calendar-strip: ^2.2.6
     react-native-collapsible: ^1.6.2
@@ -6337,13 +6335,6 @@ __metadata:
   version: 1.125.20
   resolution: "@tamagui/z-index-stack@npm:1.125.20"
   checksum: 3d9940637c06f1fa77f9c0a41b0ecc5b030c6b551a1f80942204d3421f377db024da4b8750e09639170b7cc658a54e7705b900655da455aed3ebae3ab99b88e2
-  languageName: node
-  linkType: hard
-
-"@transistorsoft/background-fetch-types@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "@transistorsoft/background-fetch-types@npm:1.0.0"
-  checksum: 971439994e7902aff8c1ba710df1967bcf8b0dd530cfb7d6374620a04d5859cc3d87637de975e0c33057db2412992f1ec8fd0d8644ea95fc711da96295fb7b5f
   languageName: node
   linkType: hard
 
@@ -14944,36 +14935,6 @@ __metadata:
   version: 19.2.7
   resolution: "react-is@npm:19.2.7"
   checksum: 148ee03b481ace8370cb9b96de386598423ed44ad36090c45ce3f905aec496db6f2675da720bbe43f39d66c43c9a16757cb71e9e55217825707dae97f0cf200f
-  languageName: node
-  linkType: hard
-
-"react-native-background-fetch@npm:^4.2.7":
-  version: 4.4.2
-  resolution: "react-native-background-fetch@npm:4.4.2"
-  dependencies:
-    "@transistorsoft/background-fetch-types": ^1.0.0
-  peerDependencies:
-    "@expo/config-plugins": ">=10.0.0"
-  peerDependenciesMeta:
-    "@expo/config-plugins":
-      optional: true
-  checksum: d774452be2dacff01f09b63f583ecc0fa0f11bf8599ccdf7f5c92d46bde57081911f0a282d11886524ae1b2278729fb17cd39e43b4b7c487c28fcfce81a030e3
-  languageName: node
-  linkType: hard
-
-"react-native-background-fetch@npm:~4.2.6":
-  version: 4.2.9
-  resolution: "react-native-background-fetch@npm:4.2.9"
-  checksum: 65d5aa4b82ac9335b399d57258c1eaa0cdc1f26790e39a0c1f121477ba524941f9c6d6eb55a5dc86da79e2623de79a40d700b1296df56094b98dda284c1965b1
-  languageName: node
-  linkType: hard
-
-"react-native-background-geolocation@npm:^4.18.6":
-  version: 4.19.4
-  resolution: "react-native-background-geolocation@npm:4.19.4"
-  dependencies:
-    react-native-background-fetch: ~4.2.6
-  checksum: d3cb50ca53635d7d9c5ff653df30b3130c587616404f5156f0fe0682c413b72a5eecbdb66bb9a474ffecbdc3a7bb7e9c860b92dbeeefd8b5f4c1fd1fd5568719
   languageName: node
   linkType: hard
 

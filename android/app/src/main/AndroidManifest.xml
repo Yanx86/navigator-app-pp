@@ -5,7 +5,8 @@
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
   <uses-permission android:name="android.permission.VIBRATE" />
-  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
   <uses-permission android:name="android.permission.CAMERA" />
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:node="remove" />
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
@@ -41,7 +42,7 @@
     </activity>
     <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />
     <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/colorAccent" />
-    <meta-data android:name="com.transistorsoft.locationmanager.license" android:value="@string/TRANSISTORSOFT_LICENSE_KEY_ANDROID" />
+    <service android:name=".location.DriverLocationService" android:exported="false" android:foregroundServiceType="location" android:stopWithTask="false" />
     <meta-data android:name="com.google.android.geo.API_KEY" android:value="@string/GOOGLE_MAPS_API_KEY" />
   </application>
   <queries>

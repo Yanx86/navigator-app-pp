@@ -19,8 +19,6 @@ permissions:
 env:
     FLEETBASE_KEY: ${{ secrets.FLEETBASE_KEY }}
     GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
-    TRANSISTORSOFT_LICENSE_KEY_ANDROID: ${{ secrets.TRANSISTORSOFT_LICENSE_KEY }}
-    TRANSISTORSOFT_LICENSE_KEY_IOS: ${{ secrets.TRANSISTORSOFT_LICENSE_KEY }}
 
 jobs:
     install_and_test:
@@ -68,8 +66,6 @@ jobs:
                   echo "GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}" >> .env
                   echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
                   echo "GOOGLE_IOS_CLIENT_ID=${{ secrets.GOOGLE_IOS_CLIENT_ID }}" >> .env
-                  echo "TRANSISTORSOFT_LICENSE_KEY_ANDROID=$TRANSISTORSOFT_LICENSE_KEY_ANDROID" >> .env
-                  echo "TRANSISTORSOFT_LICENSE_KEY_IOS=$TRANSISTORSOFT_LICENSE_KEY_IOS" >> .env
 
             - name: Generate cache key
               id: cache-key
@@ -122,7 +118,6 @@ jobs:
                   echo "GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}" >> .env
                   echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
                   echo "GOOGLE_IOS_CLIENT_ID=${{ secrets.GOOGLE_IOS_CLIENT_ID }}" >> .env
-                  echo "TRANSISTORSOFT_LICENSE_KEY_ANDROID=$TRANSISTORSOFT_LICENSE_KEY_ANDROID" >> .env
                   echo "ANDROID_VERSION_CODE=1" >> .env
                   echo "ANDROID_VERSION_NAME=ci" >> .env
 
@@ -208,6 +203,8 @@ jobs:
                   retention-days: 30
 
     ios_build:
+        # Android-only fork. Shared location dependency removed; iOS is not supported.
+        if: ${{ false }}
         runs-on: macos-latest
         needs: install_and_test
         steps:
@@ -262,7 +259,6 @@ jobs:
                   echo "GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}" >> .env
                   echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
                   echo "GOOGLE_IOS_CLIENT_ID=${{ secrets.GOOGLE_IOS_CLIENT_ID }}" >> .env
-                  echo "TRANSISTORSOFT_LICENSE_KEY_IOS=$TRANSISTORSOFT_LICENSE_KEY_IOS" >> .env
 
             - name: Cache CocoaPods
               uses: actions/cache@v5

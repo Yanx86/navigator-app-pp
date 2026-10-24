@@ -1,130 +1,118 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
-import { View } from 'react-native';
-import BackgroundGeolocation from 'react-native-background-geolocation';
-import BackgroundFetch from 'react-native-background-fetch';
+import { AppState, View } from 'react-native';
 import { check, RESULTS } from 'react-native-permissions';
-import { LocationProvider, isLocationTrackingAllowed } from '../src/contexts/LocationContext';
+import { LocationProvider, isLocationTrackingAllowed, useLocation } from '../src/contexts/LocationContext';
+import { driverLocation } from '../src/services/driver-location';
 
 let mockAuthState;
-const mockSetLocation = jest.fn();
-const mockAdapter = { host: 'https://api.fleetbase.io', namespace: 'fleet-ops/v1' };
-
+let mockToken;
+let mockContext;
+let renderer;
+const mockAdapter = { host: 'https://example.test', namespace: 'fleet-ops/v1' };
 jest.mock('react-native-permissions', () => ({
     check: jest.fn(),
-    PERMISSIONS: {
-        ANDROID: { ACCESS_FINE_LOCATION: 'android.permission.ACCESS_FINE_LOCATION' },
-        IOS: { LOCATION_WHEN_IN_USE: 'ios.permission.LOCATION_WHEN_IN_USE' },
-    },
-    RESULTS: { DENIED: 'denied', BLOCKED: 'blocked', GRANTED: 'granted' },
+    PERMISSIONS: { ANDROID: { ACCESS_FINE_LOCATION: 'fine' } },
+    RESULTS: { DENIED: 'denied', GRANTED: 'granted' },
 }));
-
-jest.mock('react-native-background-geolocation', () => ({
-    __esModule: true,
-    default: {
-        DESIRED_ACCURACY_HIGH: 1,
-        getCurrentPosition: jest.fn(),
-        onLocation: jest.fn(() => ({ remove: jest.fn() })),
-        onMotionChange: jest.fn(() => ({ remove: jest.fn() })),
-        ready: jest.fn((config, callback) => callback({ enabled: false })),
-        start: jest.fn((callback) => callback()),
-        stop: jest.fn((callback) => callback()),
-    },
+jest.mock('../src/services/driver-location', () => ({
+    buildTrackingEndpoint: (host, namespace, id) => `${host}/${namespace}/drivers/${id}/track`,
+    driverLocation: { start: jest.fn(), stop: jest.fn(), getStatus: jest.fn(), getCurrentPosition: jest.fn() },
 }));
-
-jest.mock('react-native-background-fetch', () => ({
-    __esModule: true,
-    default: {
-        configure: jest.fn(),
-        finish: jest.fn(),
-        stop: jest.fn(),
-    },
-}));
-
-jest.mock('@fleetbase/sdk', () => ({
-    Place: class Place {},
-    Point: class Point {},
-}));
-
-jest.mock('../src/contexts/AuthContext', () => ({
-    useAuth: () => mockAuthState,
-}));
-
-jest.mock('../src/hooks/use-storage', () => () => [{}, mockSetLocation]);
+jest.mock('@fleetbase/sdk', () => ({ Place: class {}, Point: class {} }));
+jest.mock('../src/contexts/AuthContext', () => ({ useAuth: () => mockAuthState }));
+jest.mock('../src/hooks/use-storage', () => () => [mockToken, jest.fn()]);
 jest.mock('../src/hooks/use-fleetbase', () => () => ({ adapter: mockAdapter }));
-jest.mock('../src/utils', () => ({
-    isEmpty: (value) => !value || Object.keys(value).length === 0,
-}));
-
-const driver = { id: 'driver-1' };
-const renderProvider = () => (
+const Probe = () => {
+    mockContext = useLocation();
+    return <View />;
+};
+const app = () => (
     <LocationProvider>
-        <View />
+        <Probe />
     </LocationProvider>
 );
-
-describe('location tracking lifecycle', () => {
-    beforeEach(() => {
-        jest.clearAllMocks();
-        Object.defineProperty(require('react-native').Platform, 'OS', { configurable: true, value: 'android' });
-        mockAuthState = { driver, isOnline: true, trackDriver: jest.fn() };
-        check.mockResolvedValue(RESULTS.GRANTED);
-        BackgroundGeolocation.getCurrentPosition.mockResolvedValue({ coords: { latitude: 1, longitude: 2 } });
+const mount = async () =>
+    ReactTestRenderer.act(async () => {
+        renderer = ReactTestRenderer.create(app());
     });
 
-    test('requires a driver, online state, and granted permission', () => {
-        expect(isLocationTrackingAllowed({ driver, isOnline: true, permissionStatus: RESULTS.GRANTED })).toBe(true);
-        expect(isLocationTrackingAllowed({ driver: null, isOnline: true, permissionStatus: RESULTS.GRANTED })).toBe(false);
-        expect(isLocationTrackingAllowed({ driver, isOnline: false, permissionStatus: RESULTS.GRANTED })).toBe(false);
-        expect(isLocationTrackingAllowed({ driver, isOnline: true, permissionStatus: RESULTS.DENIED })).toBe(false);
-    });
+beforeEach(() => {
+    jest.useFakeTimers();
+    jest.clearAllMocks();
+    Object.defineProperty(require('react-native').Platform, 'OS', { configurable: true, value: 'android' });
+    AppState.currentState = 'active';
+    mockAuthState = { driver: { id: 'a' }, isOnline: true };
+    mockToken = 'test-session';
+    check.mockResolvedValue(RESULTS.GRANTED);
+    driverLocation.start.mockResolvedValue(undefined);
+    driverLocation.stop.mockResolvedValue(undefined);
+    driverLocation.getStatus.mockResolvedValue({ status: 'tracking', error: null, delivery: 'sent', location: null, lastSentAt: 1 });
+});
+afterEach(async () => {
+    if (renderer) await ReactTestRenderer.act(async () => renderer.unmount());
+    renderer = null;
+    jest.useRealTimers();
+});
 
-    test('starts native geolocation and background fetch only for an authenticated online driver with permission', async () => {
-        await ReactTestRenderer.act(async () => {
-            ReactTestRenderer.create(renderProvider());
-        });
+test('requires chauffeur, online state, precise permission and token', () => {
+    const args = { driver: {}, isOnline: true, permissionStatus: RESULTS.GRANTED, authToken: 'token' };
+    expect(isLocationTrackingAllowed(args)).toBe(true);
+    for (const override of [{ driver: null }, { isOnline: false }, { permissionStatus: RESULTS.DENIED }, { authToken: '' }]) {
+        expect(isLocationTrackingAllowed({ ...args, ...override })).toBe(false);
+    }
+});
 
-        expect(BackgroundGeolocation.ready).toHaveBeenCalled();
-        expect(BackgroundGeolocation.start).toHaveBeenCalled();
-        expect(BackgroundFetch.configure).toHaveBeenCalled();
-    });
+test('starts one native transport for the current chauffeur', async () => {
+    await mount();
+    expect(driverLocation.start).toHaveBeenCalledTimes(1);
+    expect(driverLocation.start).toHaveBeenCalledWith('https://example.test/fleet-ops/v1/drivers/a/track', 'test-session');
+    expect(mockContext.isTracking).toBe(true);
+});
 
-    test('does not initialize tracking when permission is denied', async () => {
-        check.mockResolvedValue(RESULTS.DENIED);
+test.each(['permission', 'token'])('does not start without %s', async (reason) => {
+    if (reason === 'permission') check.mockResolvedValue(RESULTS.DENIED);
+    else mockToken = null;
+    await mount();
+    expect(driverLocation.start).not.toHaveBeenCalled();
+    expect(driverLocation.stop).toHaveBeenCalled();
+});
 
-        await ReactTestRenderer.act(async () => {
-            ReactTestRenderer.create(renderProvider());
-        });
+test('going offline stops native acquisition', async () => {
+    await mount();
+    driverLocation.stop.mockClear();
+    mockAuthState = { ...mockAuthState, isOnline: false };
+    await ReactTestRenderer.act(async () => renderer.update(app()));
+    expect(driverLocation.stop).toHaveBeenCalled();
+    expect(mockContext.isTracking).toBe(false);
+});
 
-        expect(BackgroundGeolocation.ready).not.toHaveBeenCalled();
-        expect(BackgroundGeolocation.start).not.toHaveBeenCalled();
-        expect(BackgroundFetch.configure).not.toHaveBeenCalled();
-        expect(BackgroundGeolocation.stop).toHaveBeenCalled();
-        expect(BackgroundFetch.stop).toHaveBeenCalled();
-    });
+test('session replacement stops before starting the next chauffeur', async () => {
+    await mount();
+    driverLocation.stop.mockClear();
+    driverLocation.start.mockClear();
+    mockAuthState = { driver: { id: 'b' }, isOnline: true };
+    mockToken = 'other-session';
+    await ReactTestRenderer.act(async () => renderer.update(app()));
+    expect(driverLocation.start).toHaveBeenCalledWith('https://example.test/fleet-ops/v1/drivers/b/track', 'other-session');
+    expect(driverLocation.stop.mock.invocationCallOrder[0]).toBeLessThan(driverLocation.start.mock.invocationCallOrder[0]);
+});
 
-    test('stops geolocation and background fetch when the driver goes offline or logs out', async () => {
-        let renderer;
-        await ReactTestRenderer.act(async () => {
-            renderer = ReactTestRenderer.create(renderProvider());
-        });
+test('a terminal native error is displayed without automatically restarting', async () => {
+    await mount();
+    driverLocation.getStatus.mockResolvedValue({ status: 'error', error: 'session_expired', delivery: 'idle', location: null });
+    await ReactTestRenderer.act(async () => jest.advanceTimersByTime(2000));
+    expect(mockContext.isTracking).toBe(false);
+    expect(mockContext.trackingError).toBe('session_expired');
+    expect(driverLocation.start).toHaveBeenCalledTimes(1);
+});
 
-        jest.clearAllMocks();
-        mockAuthState = { ...mockAuthState, isOnline: false };
-        await ReactTestRenderer.act(async () => {
-            renderer.update(renderProvider());
-        });
-
-        expect(BackgroundGeolocation.stop).toHaveBeenCalled();
-        expect(BackgroundFetch.stop).toHaveBeenCalled();
-
-        jest.clearAllMocks();
-        mockAuthState = { ...mockAuthState, driver: null };
-        await ReactTestRenderer.act(async () => {
-            renderer.update(renderProvider());
-        });
-
-        expect(BackgroundGeolocation.stop).toHaveBeenCalled();
-        expect(BackgroundFetch.stop).toHaveBeenCalled();
-    });
+test('suspending JS UI polling does not stop the native service', async () => {
+    await mount();
+    driverLocation.stop.mockClear();
+    driverLocation.getStatus.mockClear();
+    AppState.currentState = 'background';
+    await ReactTestRenderer.act(async () => jest.advanceTimersByTime(4000));
+    expect(driverLocation.stop).not.toHaveBeenCalled();
+    expect(driverLocation.getStatus).not.toHaveBeenCalled();
 });
