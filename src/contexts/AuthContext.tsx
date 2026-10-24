@@ -7,6 +7,7 @@ import useStorage, { storage } from '../hooks/use-storage';
 import useFleetbase from '../hooks/use-fleetbase';
 import { useLanguage } from './LanguageContext';
 import { useNotification } from './NotificationContext';
+import { driverLocation } from '../services/driver-location';
 
 const AuthContext = createContext();
 
@@ -165,6 +166,8 @@ export const AuthProvider = ({ children }) => {
             if (!adapter) return;
 
             online = online === null ? !state.driver.isOnline : online;
+            // Stop locally even if the server cannot acknowledge the end of service.
+            if (!online) await driverLocation.stop();
 
             try {
                 const driver = await adapter.post(`drivers/${state.driver.id}/toggle-online`, { online });
@@ -273,6 +276,7 @@ export const AuthProvider = ({ children }) => {
 
     // Create a session from driver data/JSON
     const createDriverSession = async (driver, callback = null) => {
+        await driverLocation.stop();
         clearSessionData();
         // setDriverDefaultLocation(driver);
         setDriver(driver);
@@ -316,12 +320,11 @@ export const AuthProvider = ({ children }) => {
     const switchOrganization = useCallback(
         async (organization) => {
             if (!adapter) return;
+            await driverLocation.stop();
 
             try {
                 const { driver } = await adapter.post(`drivers/${state.driver.id}/switch-organization`, { next: organization.id });
-                console.log('[switchOrganization #driver]', driver);
-                console.log('[switchOrganization #driver.token]', driver.token);
-                createDriverSession(driver);
+                await createDriverSession(driver);
             } catch (err) {
                 console.warn('Error trying to switch driver organization:', err);
             }
@@ -343,6 +346,7 @@ export const AuthProvider = ({ children }) => {
 
     // Logout: Clear session
     const logout = useCallback(() => {
+        void driverLocation.stop().catch(() => console.warn('Unable to stop location service'));
         dispatch({ type: 'LOGOUT', isSigningOut: true });
 
         // Remove driver session

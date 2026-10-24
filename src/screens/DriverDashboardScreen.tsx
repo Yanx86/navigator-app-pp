@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import { Text, YStack, XStack, useTheme } from 'tamagui';
+import { Button, Text, YStack, XStack, useTheme } from 'tamagui';
 import { useLocation } from '../contexts/LocationContext';
 import { useOrderManager } from '../contexts/OrderManagerContext';
 import { humanize } from 'inflected';
@@ -19,7 +19,7 @@ const WidgetContainer = ({ px = '$4', py = '$4', children, ...props }) => {
 const DriverDashboardScreen = () => {
     const theme = useTheme();
     const navigation = useNavigation();
-    const { isTracking, location } = useLocation();
+    const { isTracking, location, trackingError, deliveryStatus, lastSentAt, startTracking } = useLocation();
     const { allActiveOrders } = useOrderManager();
 
     return (
@@ -35,6 +35,26 @@ const DriverDashboardScreen = () => {
                                 <Text color={isTracking ? '$successBorder' : '$textSecondary'}>{isTracking ? 'Yes' : 'No'}</Text>
                             </YStack>
                         </XStack>
+                        {trackingError ? (
+                            <Text color='$textSecondary' mt='$2'>
+                                Location sharing stopped. Check location permissions and sign in again if your session has expired.
+                            </Text>
+                        ) : null}
+                        {trackingError ? (
+                            <Button mt='$2' onPress={startTracking}>
+                                Retry location sharing
+                            </Button>
+                        ) : null}
+                        {deliveryStatus === 'unavailable' ? (
+                            <Text color='$textSecondary' mt='$2'>
+                                Position could not be sent. Updates will resume with a fresh position when the connection is available. Offline journey history is not saved in this version.
+                            </Text>
+                        ) : null}
+                        {lastSentAt ? (
+                            <Text color='$textSecondary' mt='$2'>
+                                Last position sent: {new Date(lastSentAt).toLocaleTimeString()}
+                            </Text>
+                        ) : null}
                     </WidgetContainer>
                     <WidgetContainer>
                         <Text color='$textPrimary' fontWeight='bold' mb='$3'>

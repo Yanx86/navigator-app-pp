@@ -1,0 +1,5 @@
+<resources>
+    <string name="tracking_channel">Position du chauffeur</string>
+    <string name="tracking_title">Suivi de position actif</string>
+    <string name="tracking_body">Votre position est partagée pendant votre service. Ouvrez Navigator pour passer hors ligne.</string>
+</resources>

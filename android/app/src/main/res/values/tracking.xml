@@ -1,0 +1,5 @@
+<resources>
+    <string name="tracking_channel">Driver location</string>
+    <string name="tracking_title">Location tracking active</string>
+    <string name="tracking_body">Your location is shared while you are online. Open Navigator to go offline.</string>
+</resources>
