@@ -190,6 +190,22 @@ jobs:
             - name: Make Gradlew Executable
               run: cd android && chmod +x ./gradlew
 
+            - name: Run Android unit tests
+              run: |
+                  cd android
+                  ./gradlew :app:testDebugUnitTest --no-daemon --stacktrace
+
+            - name: Upload Android unit test reports
+              if: ${{ always() }}
+              uses: actions/upload-artifact@v6
+              with:
+                  name: android-unit-test-reports
+                  path: |
+                      android/app/build/reports/tests/testDebugUnitTest/
+                      android/app/build/test-results/testDebugUnitTest/
+                  if-no-files-found: warn
+                  retention-days: 30
+
             - name: Build Android Debug APK
               run: |
                   cd android
